@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+print(base_style_graph(graph_kitchen_housetype_quintile,x_title = "Type of Houses",y_title = "Household(in %)",legend_title = "Kitchen type"))
+```
+
+```{r}
+print(base_style_graph(graph_mepcarea_housetype_quintile,x_title = "Type of Houses",y_title = "Median Per capita Area",legend_title = ""))
+```
+
+```{r}
+print(base_style_graph(graph_latrine_housetype_quintile,x_title = "Type of Houses",y_title = "Households(In %)",legend_title = "Latrine Access:"))
+```
+
+```{r}
+print(base_style_graph(graph_water_housetype_quintile,x_title = "Type of Houses",y_title = "Households(In %)",legend_title = "Water Access:"))
+```
+```{r}
+print(base_style_graph(graph_roof_housetype_qquintile,x_title = "Type of Houses",y_title = "Households(In %)",legend_title = "Roof Type:"))
+```
+```{r}
+print(base_style_graph(graph_wall_housetype_qquintile,x_title = "Type of Houses",y_title = "Households(In %)",legend_title = "Wall Type:"))
+```
+```{r}
+print(base_style_graph(graph_couple_separate_quintile, x_title = "Type of Houses", y_title = "Households(In %)",legend_title = "Couple with room:"))
+```
+```{r}
+print(base_style_graph(graph_dwellingtype_quintile, x_title = "Type of Houses", y_title = "Households(In %)",legend_title = "Type of Dwelling:"))
+```
+
+```{r}
+print(base_style_graph(graph_floor_quintile, x_title = "Type of Houses", y_title = "Households(In %)",legend_title = "Type of Building(By no. of Floor):"))
+```
+```{r}
+print(base_style_graph(graph_commute_quintile, x_title = "Type of Houses", y_title = "Households(In %)",legend_title = "Commute Distance:"))
+```
+
+```{r}
+print(base_style_graph(graph_area_quintile, x_title = "Type of Houses", y_title = "Households(In %)",legend_title = "Area Type:"))
+```
+
