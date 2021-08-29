@@ -1,6 +1,8 @@
-
+library(dplyr)
+library(tidyr)
 #Functions for preparing household groups data based on details of individual members
 
+#Create age-groups
 create_age_group = function(individual_detail){
   return(individual_detail %>%
     mutate(age_group=case_when(Age<=14~"Child",
@@ -10,6 +12,7 @@ create_age_group = function(individual_detail){
                                Age>60~"Senior")))
 }
 
+#Recode Occupational Activity Groups to all individuals
 create_activity_group = function(individual_detail){
   return(individual_detail %>%
     mutate(activity_group=case_when(Principal_activity %in% c("11","21","12")~"Self_Employed",
@@ -21,6 +24,7 @@ create_activity_group = function(individual_detail){
                                      Principal_activity %in% c("94","97")~"Others")))
 }
 
+#Assign Skill groups to all individuals
 create_skill_group = function(individual_detail){
   return(individual_detail %>%
     mutate(skill_group = case_when(substr(occupation,1,1)%in% c("9")~"Skill_1",
@@ -29,6 +33,7 @@ create_skill_group = function(individual_detail){
                                    substr(occupation,1,1)%in% c("1")~"Skill_4")))
 }
 
+#Create household id and a column to recognizze hh head
 create_hhid_hhead= function(individual_detail){
   return(individual_detail %>%
            mutate(hh_id=as.numeric(paste(FSU,Second_stage_stratum,Sample_hhld,sep = "")),
@@ -46,17 +51,24 @@ check_senior_household = function(individual_member_details,senior_household_mem
              Principal_activity %in% c("11","21","12","31","41","81","51","93")))
 }
 
-create_occupation_hh = function(individual_member_details){
-  return(individual_member_details%>% 
+#For each household recognize the number of people in each occupational group
+create_occupation_hh = function(individual_member_details,sector){
+  return(individual_member_details%>%
+           filter(Sector==sector)%>%
     group_by(hh_id, activity_group)%>%
     count()%>%
     spread(key = activity_group,value = n)%>%
     replace(is.na(.),0))
-}  
+}
 
-
-add_occugrp_col = function(individual_member_details){
-  return(create_occupation_hh(individual_member_details)%>%
+#Determine the occupational group of the household
+#If there is at least one member with a regular salaried/wage : HH is Regular Salaried
+#If there is at no member with regular income, number of casual workers is greater than number of self-employed: HH is casual wage
+#If there is at no member with regular income, number of casual workers is less than number of self-employed: HH is self employed
+#If both casual wage and self employed are equal and non-zero: HH is self-employed
+#In all other cases household is non-working
+add_occugrp_col = function(individual_member_details,sector){
+  return(create_occupation_hh(individual_member_details,sector)%>%
            mutate(occupation_group=case_when(Regular_Salaried!=0~"Regular_Salaried",
                                              Regular_Salaried==0 & Casual_wage > Self_Employed~"Casual_Wage",
                                              Regular_Salaried==0 & Casual_wage < Self_Employed~"Self_Employed",
@@ -64,16 +76,21 @@ add_occugrp_col = function(individual_member_details){
                                              Casual_wage ==0 & Regular_Salaried==0 & Self_Employed==0~"No_Working")))
 }
 
-
-create_skill_hh = function(individual_member_details){
-  return(head(individual_member_details%>% 
+##For each household recognize the number of people in each skill group
+create_skill_hh = function(individual_member_details,sector){
+  return(individual_member_details%>%
+           filter(Sector==sector)%>%
            group_by(hh_id, skill_group)%>%
            count()%>%
            spread(key = skill_group,value = n)%>%
-           replace(is.na(.),0)))
+           replace(is.na(.),0))
 }  
 
-
+#Determine the skill group of the household
+#If there is at least one member with a skill level 4 : HH is Skill Level 4
+#If there is no member with skill level 4, and at least one member with skill level 3: HH is skill level 3
+#If there is no member with skill level 4 and Skill level 3, and at least one member with skill level 2: HH is skill level 2
+#If there is no member with skill level 4, Skill level 3 and Skill level 2, and at least one member with skill level 1: HH is skill level 1
 add_skill_col = function(individual_member_details){
   return(create_skill_hh(individual_member_details)%>%
            mutate(hh_skill_group=case_when(Skill_4 !=0~"Skill_4",

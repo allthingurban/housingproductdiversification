@@ -23,7 +23,7 @@ prepare_base_house_data = function(dwelling_unit_details,level6_health,Level3,le
            merge(select(level6_health,48,16:30),by.x = "ID", by.y = "ID",all.x = TRUE)%>%
            merge(select(Level3,2,13,14,17:20,25:36),by.x = c("FSU", "Second_stage_stratum","Sample_hhld"),by.y = c("FSU", "Second_stage_stratum","Sample_hhld"),all.x = TRUE)%>%
            merge(select(level5_wash,68,17,18,31,32,46:49,52,53,62),by.x = "ID", by.y = "ID",all.x = TRUE)%>%
-           merge(select(add_student_hhhead(individual_member_details),16:21), by.x = "ID", by.y="hh_id",all.x = TRUE)%>%
+           merge(select(add_student_hhhead(individual_member_details),16,17,21), by.x = "ID", by.y="hh_id",all.x = TRUE)%>%
            mutate(mpce_quintile=pentile(exp_tot/Hhsize)))
 }
 
