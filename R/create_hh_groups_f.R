@@ -1,6 +1,18 @@
 library(dplyr)
 library(tidyr)
-#Functions for preparing household groups data based on details of individual members
+
+#Functions for preparing household groups data based on details of individual members and households
+
+prepare_base_house_data = function(dwelling_unit_details,level6_health,Level3,level5_wash,individual_member_details){
+  return(dwelling_unit_details %>%
+           filter(Sector==2)%>%
+           merge(select(level6_health,48,16:30),by.x = "ID", by.y = "ID",all.x = TRUE)%>%
+           merge(select(Level3,2,13,14,17:20,25:36),by.x = c("FSU", "Second_stage_stratum","Sample_hhld"),by.y = c("FSU", "Second_stage_stratum","Sample_hhld"),all.x = TRUE)%>%
+           merge(select(level5_wash,68,17,18,31,32,46:49,52,53,62),by.x = "ID", by.y = "ID",all.x = TRUE)%>%
+           merge(select(add_student_hhhead(individual_member_details),16,17,21), by.x = "ID", by.y="hh_id",all.x = TRUE)%>%
+           mutate(mpce_quintile=pentile(exp_tot/Hhsize)))
+}
+
 
 #Create age-groups
 create_age_group = function(individual_detail){
@@ -91,8 +103,8 @@ create_skill_hh = function(individual_member_details,sector){
 #If there is no member with skill level 4, and at least one member with skill level 3: HH is skill level 3
 #If there is no member with skill level 4 and Skill level 3, and at least one member with skill level 2: HH is skill level 2
 #If there is no member with skill level 4, Skill level 3 and Skill level 2, and at least one member with skill level 1: HH is skill level 1
-add_skill_col = function(individual_member_details){
-  return(create_skill_hh(individual_member_details)%>%
+add_skill_col = function(individual_member_details,sector){
+  return(create_skill_hh(individual_member_details,sector)%>%
            mutate(hh_skill_group=case_when(Skill_4 !=0~"Skill_4",
                                            Skill_4 ==0 & Skill_3!=0 ~"Skill_3",
                                            Skill_4 ==0 & Skill_3==0 & Skill_2!=0~"Skill_2",
@@ -105,3 +117,5 @@ add_student_hhhead = function(individual_member_details){
            filter(hh_head==1)%>%
            mutate(is_student_hh=ifelse(hh_head==1 & Principal_activity==91,1,0)))
 }
+
+

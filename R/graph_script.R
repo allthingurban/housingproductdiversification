@@ -59,7 +59,7 @@ graph_water_housetype_quintile=  recode_dw_access(recode_dwelling_room(house_cat
             position = position_stack(vjust = 0.7),size=3)
 
 
-#tyoe of roof
+#type of roof
 graph_roof_housetype_qquintile = recode_roof_type(recode_dwelling_room(house_cat_base_data))%>%
   filter(!housing_unit_type %in% c("Hostel"))%>%
   crosstab_3way(x=housing_unit_type,y=roof_type_recoded,z=mpce_quintile,weight = Multiplier/100,format = "long")%>%
@@ -70,7 +70,7 @@ graph_roof_housetype_qquintile = recode_roof_type(recode_dwelling_room(house_cat
   geom_text(mapping=aes(label = round(pct,1)),
             position = position_stack(vjust = 0.7),size=3)
 
-#tyoe of wall
+#type of wall
 graph_wall_housetype_qquintile = recode_wall_type(recode_dwelling_room(house_cat_base_data))%>%
   filter(!housing_unit_type %in% c("Hostel"))%>%
   crosstab_3way(x=housing_unit_type,y=wall_type_recoded,z=mpce_quintile,weight = Multiplier/100,format = "long")%>%
@@ -136,4 +136,40 @@ graph_area_quintile=recode_dwelling_room(house_cat_base_data)%>%
             position = position_stack(vjust = 0.7),size=3)+
   scale_fill_manual(values= c("1"="#D0AD5E", "2"="#6dab6b",'3'="#989B5C","9"="#006666"), limits = c("1", "2","3","9"),
                     labels = c("Notified Slum", "Non-Notified Slum", "Squatter","Non-Slum"))
+
+
+
+recode_dwelling_room(house_cat_base_data)%>%
+  filter(!housing_unit_type %in% c("Hostel"))%>%
+  crosstab_3way(x=housing_unit_type,y=area_type,z=mpce_quintile,weight = Multiplier/100,format = "long")%>%
+  rename(x_axis="housing_unit_type",
+         y_axis="pct",
+         fill_col="area_type",
+         z_axis="mpce_quintile")
+
+
+create_graphs=function(data_graph,values_df,limits_df=NULL,labels_df=NULL,x_title=NULL,y_title=NULL,legend_title=NULL,facet_labels){
+  return(ggplot(data = data_graph,aes(x=x_axis, y=y_axis, fill=fill_col))+
+    geom_col()+
+    facet_wrap(~z_axis,labeller = facet_labels)+
+    geom_text(mapping=aes(label = round(y_axis,1)),
+              position = position_stack(vjust = 0.7),size=3)+
+    scale_fill_manual(values= values_df, limits = limits_df,
+                      labels = labels_df)+
+    xlab(x_title)+
+    ylab(y_title)+
+    labs(fill=legend_title)+
+    theme(legend.position = "bottom")+
+    scale_x_discrete(labels = function(x) lapply(strwrap(x, width = 10, simplify = FALSE), paste, collapse="\n")))
+}
+
+print(create_graphs(recode_dwelling_room(house_cat_base_data)%>%
+                      filter(!housing_unit_type %in% c("Hostel"))%>%
+                      crosstab_3way(x=housing_unit_type,y=area_type,z=mpce_quintile,weight = Multiplier/100,format = "long")%>%
+                      rename(x_axis="housing_unit_type",
+                             y_axis="pct",
+                             fill_col="area_type",
+                             z_axis="mpce_quintile"),
+                values_df = values_areatype,limits_df = limits_areatype,labels_df = labels_areatype,x_title = "Type of Houses",y_title = "Households(In %)",legend_title = "Roof Type:"))
+
 

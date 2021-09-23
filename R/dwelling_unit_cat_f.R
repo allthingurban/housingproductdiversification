@@ -16,19 +16,6 @@ library(StatMeasures)
 #[79] "water_nearlatrine"      "hh_head"                "age_group"              "activity_group"         "skill_group"            "is_student_hh"         
 #[85] "mpce_quintile"
 
-
-prepare_base_house_data = function(dwelling_unit_details,level6_health,Level3,level5_wash,individual_member_details){
-  return(dwelling_unit_details %>%
-           filter(Sector==2)%>%
-           merge(select(level6_health,48,16:30),by.x = "ID", by.y = "ID",all.x = TRUE)%>%
-           merge(select(Level3,2,13,14,17:20,25:36),by.x = c("FSU", "Second_stage_stratum","Sample_hhld"),by.y = c("FSU", "Second_stage_stratum","Sample_hhld"),all.x = TRUE)%>%
-           merge(select(level5_wash,68,17,18,31,32,46:49,52,53,62),by.x = "ID", by.y = "ID",all.x = TRUE)%>%
-           merge(select(add_student_hhhead(individual_member_details),16,17,21), by.x = "ID", by.y="hh_id",all.x = TRUE)%>%
-           mutate(mpce_quintile=pentile(exp_tot/Hhsize)))
-}
-
-colnames(house_cat_base_data)
-
 recode_dwelling_room = function(house_cat_base_data){
   return(house_cat_base_data %>% mutate(housing_unit_type=case_when((living_rooms==0 | is.na(living_rooms)) & is_student_hh==1 ~ "Hostel",
                                             (living_rooms==0 | is.na(living_rooms)) & is_student_hh==0 ~ "No Living Room",
