@@ -1,0 +1,60 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Rent = total+area_type+dwelling_type+kitchen+water+sanitation+commute
+
+[1] "NSS_region"             "mpce_quintile"          "occupation_group"       "hh_skill_group"         "housing_unit_type"      "commute"               
+ [7] "commute_cat"            "area_cat"               "dw_access_recoded"      "tenure_status"          "latrine_access_recoded" "is_couple_noroom"      
+[13] "Social_group"           "commute_glm" 
+
+```{r}
+library(tidyverse)
+glm_data=recode_marrie_couple_room(recode_latrine_access(recode_tenure_status(recode_dw_access(recode_area_cat(recode_commute_cat(recode_dwelling_room(house_cat_base_data)))))))%>%
+  select(10,82:92,55,37)
+glm_data=glm_data %>%
+  filter(housing_unit_type !="Hostel")%>%
+  mutate(commute_glm=if_else(commute_cat %in% c("No Commute","Upto 5 Km"),1,0),
+         urban_poor_glm=if_else(mpce_quintile %in% c(1,2),1,0))
+
+```
+
+```{r}
+
+mlm_1=multinom(data = glm_data, commute_cat~urban_poor_glm+area_cat+occupation_group+housing_unit_type)
+summary(mlm_1)
+
+glm_1=glm(data = glm_data, commute_glm~urban_poor_glm+area_cat+occupation_group+housing_unit_type+tenure_status,family = "binomial")
+glm_2=glm(data = glm_data, commute_glm~urban_poor_glm+Social_group+area_cat+occupation_group,na.action = "na.exclude", family = "binomial")
+
+r2glm(glm_1)
+summary(glm_1)
+summary(glm_2)
+
+anova(glm_1,test="F")
+ 1 - pchisq(deviance, degrees of freedom)
+```
+
+
+```{r}
+plot(glm_1)
+plot(residuals(glm_1) ~ fitted(glm_1))
+abline(0, 0, lty = 2)
+```
+```{r}
+r2glm <- function(model) {
+
+  summaryLog <- summary(model)
+  1 - summaryLog$deviance / summaryLog$null.deviance
+
+}
+
+```
+```{r}
+house_cat_base_data%>%
+  filter(mpce_quintile %in% c(1,2,3) & tenure %in% c(3,4,5,9))%>%
+  group_by(NSS_region, mpce_quintile)%>%dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  summarise(mean_rent=wtd.mean(rent,weights = Multiplier/100,na.rm = TRUE))
+```
+
