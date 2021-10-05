@@ -19,9 +19,6 @@ individual_member_details = individual_member_details %>%
 #Add Household Id and column for recognising who is household head
 individual_member_details=create_hhid_hhead(individual_member_details)
 
-#Add columns for age groups
-individual_member_details=create_age_group(individual_member_details)
-
 #Add coumns for activity group
 individual_member_details = create_activity_group(individual_member_details)
 

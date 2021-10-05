@@ -9,20 +9,36 @@ prepare_base_house_data = function(dwelling_unit_details,level6_health,Level3,le
            merge(select(level6_health,48,16:30),by.x = "ID", by.y = "ID",all.x = TRUE)%>%
            merge(select(Level3,2,13,14,17:20,25:36),by.x = c("FSU", "Second_stage_stratum","Sample_hhld"),by.y = c("FSU", "Second_stage_stratum","Sample_hhld"),all.x = TRUE)%>%
            merge(select(level5_wash,68,17,18,31,32,46:49,52,53,62),by.x = "ID", by.y = "ID",all.x = TRUE)%>%
-           merge(select(add_student_hhhead(individual_member_details),16,17,21), by.x = "ID", by.y="hh_id",all.x = TRUE)%>%
+           merge(select(add_student_hhhead(individual_member_details),16,17,20), by.x = "ID", by.y="hh_id",all.x = TRUE)%>%
            mutate(mpce_quintile=pentile(exp_tot/Hhsize)))
 }
 
 
+
+
 #Create age-groups
+#Select all the working members in the household and calculate their average age
 create_age_group = function(individual_detail){
-  return(individual_detail %>%
-    mutate(age_group=case_when(Age<=14~"Child",
-                               Age>14 & Age<=24~"Youth",
-                               Age>24 & Age<=40~"Young_Adult",
-                               Age>40 & Age<=60~"Adult",
-                               Age>60~"Senior")))
+  return(individual_member_details%>%
+           filter(Sector==2)%>%
+           group_by(hh_id)%>%
+           summarise(mean_age=mean(Age))%>%
+           mutate(age_cat=case_when(mean_age<=18~"Child",
+                                    mean_age>18 & mean_age<=25~"Young",
+                                    mean_age>25 & mean_age<=35~"Young Adult",
+                                    mean_age>35 & mean_age<=45~"Adult",
+                                    mean_age>45~"Mature Adult")))
 }
+
+#Merge the household data and individual data to add age group to each household
+add_age_group=function(house_cat_base_data,individual_member_details){
+  return(merge(house_cat_base_data, 
+               create_age_group(individual_member_details),
+               by.x ="ID" ,
+               by.y ="hh_id",
+               all.x = TRUE))
+}
+
 
 #Recode Occupational Activity Groups to all individuals
 create_activity_group = function(individual_detail){
@@ -117,5 +133,4 @@ add_student_hhhead = function(individual_member_details){
            filter(hh_head==1)%>%
            mutate(is_student_hh=ifelse(hh_head==1 & Principal_activity==91,1,0)))
 }
-
 

@@ -34,6 +34,14 @@ recode_area_cat = function(house_cat_base_data){
                                                            total>=300 & total <600 ~ "Comfortable",
                                                            total>=600~"Large")))
 }
+
+
+recode_percapitaarea_cat = function(house_cat_base_data){
+  return(house_cat_base_data %>% mutate(percapitaarea_cat=case_when(total/Hhsize<=60~"0",
+                                                           total>60 ~"1")))
+}
+
+
 #distance: not required to travel - 1; travelled a distance of: less than 1 k.m. - 2, 1 to 5 k.m. - 3,
 #5 to 10 k.m. - 4, 10 to 15 k.m. - 5, 15 to 30 k.m. - 6, 30 k.m. or more - 7
 recode_commute_cat = function(house_cat_base_data){

@@ -2,6 +2,10 @@
 title: "R Notebook"
 output: html_notebook
 ---
+```{r}
+library(tidyr)
+library(dplyr)
+```
 
 Rent = total+area_type+dwelling_type+kitchen+water+sanitation+commute
 
@@ -10,51 +14,181 @@ Rent = total+area_type+dwelling_type+kitchen+water+sanitation+commute
 [13] "Social_group"           "commute_glm" 
 
 ```{r}
-library(tidyverse)
-glm_data=recode_marrie_couple_room(recode_latrine_access(recode_tenure_status(recode_dw_access(recode_area_cat(recode_commute_cat(recode_dwelling_room(house_cat_base_data)))))))%>%
-  select(10,82:92,55,37)
+
+glm_data=recode_percapitaarea_cat(recode_marrie_couple_room(recode_latrine_access(recode_tenure_status(recode_dw_access(recode_area_cat(recode_commute_cat(recode_dwelling_room(house_cat_base_data))))))))%>%
+  select(10,82:95,55,37)
+
 glm_data=glm_data %>%
-  filter(housing_unit_type !="Hostel")%>%
+  #filter(commute_cat!="Not Working")%>%
   mutate(commute_glm=if_else(commute_cat %in% c("No Commute","Upto 5 Km"),1,0),
-         urban_poor_glm=if_else(mpce_quintile %in% c(1,2),1,0))
+         urban_poor_glm=if_else(mpce_quintile %in% c(1,2),"Urban_Poor","Not_poor"),
+         couple_noroom_glm=if_else(is_couple_noroom==1,"No","Yes"),
+         percapitaarea_cat_glm=as.numeric(percapitaarea_cat),
+         Social_group_glm=as.factor(Social_group))
 
 ```
 
+
+
 ```{r}
 
-mlm_1=multinom(data = glm_data, commute_cat~urban_poor_glm+area_cat+occupation_group+housing_unit_type)
-summary(mlm_1)
+glm_1=glm(data = glm_data, 
+          commute_glm~urban_poor_glm+
+            occupation_group+
+            couple_noroom_glm+
+            age_cat+
+            Social_group_glm,
+          family = "binomial")
 
-glm_1=glm(data = glm_data, commute_glm~urban_poor_glm+area_cat+occupation_group+housing_unit_type+tenure_status,family = "binomial")
-glm_2=glm(data = glm_data, commute_glm~urban_poor_glm+Social_group+area_cat+occupation_group,na.action = "na.exclude", family = "binomial")
-
-r2glm(glm_1)
 summary(glm_1)
+VIF(glm_1)
+visreg::visreg(glm_1,"occupation_group",gg=TRUE,scale = "response")
+visreg::visreg(glm_1,"Social_group_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_1,"urban_poor_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_1,"age_cat",gg=TRUE,scale = "response")
+visreg::visreg(glm_1,"couple_noroom_glm",gg=TRUE,scale = "response")
+```
+
+
+
+```{r}
+glm_2=glm(data = glm_data, 
+          percapitaarea_cat_glm~urban_poor_glm+
+            occupation_group+
+            couple_noroom_glm+
+            age_cat+
+            Social_group_glm,
+          family = "binomial")
+
 summary(glm_2)
+VIF(glm_2)
+visreg::visreg(glm_2,"occupation_group",gg=TRUE,scale = "response")
+visreg::visreg(glm_2,"Social_group_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_2,"urban_poor_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_2,"age_cat",gg=TRUE,scale = "response")
+visreg::visreg(glm_2,"couple_noroom_glm",gg=TRUE,scale = "response")
 
-anova(glm_1,test="F")
- 1 - pchisq(deviance, degrees of freedom)
+```
+
+
+
+```{r}
+glm_data=glm_data%>% mutate(tenure_status_glm=if_else(tenure_status=="Ownership",1,0))
+glm_3=glm(data = glm_data, 
+          tenure_status_glm~urban_poor_glm+
+            occupation_group+
+            couple_noroom_glm+
+            age_cat+
+            Social_group_glm,
+          family = "binomial")
+
+summary(glm_3)
+VIF(glm_3)
+visreg::visreg(glm_3,"occupation_group",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"Social_group_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"urban_poor_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"age_cat",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"couple_noroom_glm",gg=TRUE,scale = "response")
 ```
 
 
 ```{r}
-plot(glm_1)
-plot(residuals(glm_1) ~ fitted(glm_1))
-abline(0, 0, lty = 2)
+glm_data=glm_data%>% mutate(tenure_status_glm=if_else(tenure_status=="Formal Rental",1,0))
+glm_3=glm(data = glm_data, 
+          tenure_status_glm~urban_poor_glm+
+            occupation_group+
+            couple_noroom_glm+
+            age_cat+
+            Social_group_glm,
+          family = "binomial")
+
+summary(glm_3)
+VIF(glm_3)
+visreg::visreg(glm_3,"occupation_group",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"Social_group_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"urban_poor_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"age_cat",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"couple_noroom_glm",gg=TRUE,scale = "response")
 ```
+
 ```{r}
-r2glm <- function(model) {
+glm_data=glm_data%>% mutate(tenure_status_glm=if_else(tenure_status=="Informal Rental",1,0))
+glm_3=glm(data = glm_data, 
+          tenure_status_glm~urban_poor_glm+
+            occupation_group+
+            couple_noroom_glm+
+            age_cat+
+            Social_group_glm,
+          family = "binomial")
 
-  summaryLog <- summary(model)
-  1 - summaryLog$deviance / summaryLog$null.deviance
+summary(glm_3)
+VIF(glm_3)
+visreg::visreg(glm_3,"occupation_group",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"Social_group_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"urban_poor_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"age_cat",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"couple_noroom_glm",gg=TRUE,scale = "response")
+```
 
-}
+
+```{r}
+glm_data=glm_data%>% mutate(tenure_status_glm=if_else(tenure_status=="Others",1,0))
+glm_3=glm(data = glm_data, 
+          tenure_status_glm~urban_poor_glm+
+            occupation_group+
+            couple_noroom_glm+
+            age_cat+
+            Social_group_glm,
+          family = "binomial")
+
+summary(glm_3)
+VIF(glm_3)
+visreg::visreg(glm_3,"occupation_group",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"Social_group_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"urban_poor_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"age_cat",gg=TRUE,scale = "response")
+visreg::visreg(glm_3,"couple_noroom_glm",gg=TRUE,scale = "response")
+```
+
+```{r}
+glm_data=glm_data%>% mutate(dw_access_glm=if_else(dw_access_recoded=="Exclusive",1,0))
+glm_4=glm(data = glm_data, 
+          dw_access_glm~urban_poor_glm+
+            occupation_group+
+            couple_noroom_glm+
+            age_cat+
+            Social_group_glm,
+          family = "binomial")
+
+summary(glm_4)
+VIF(glm_4)
+visreg::visreg(glm_4,"occupation_group",gg=TRUE,scale = "response")
+visreg::visreg(glm_4,"Social_group_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_4,"urban_poor_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_4,"age_cat",gg=TRUE,scale = "response")
+visreg::visreg(glm_4,"couple_noroom_glm",gg=TRUE,scale = "response")
+library(car)
+leveneTest(dw_access_glm~age_cat,data = glm_data)
+summary(aov(dw_access_glm~age_cat,data = glm_data))
 
 ```
+
 ```{r}
-house_cat_base_data%>%
-  filter(mpce_quintile %in% c(1,2,3) & tenure %in% c(3,4,5,9))%>%
-  group_by(NSS_region, mpce_quintile)%>%dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  summarise(mean_rent=wtd.mean(rent,weights = Multiplier/100,na.rm = TRUE))
+glm_data=glm_data%>% mutate(dw_access_glm=if_else(dw_access_recoded=="Shared",1,0))
+glm_4=glm(data = glm_data, 
+          dw_access_glm~urban_poor_glm+
+            occupation_group+
+            couple_noroom_glm+
+            Social_group_glm,
+          family = "binomial")
+
+summary(glm_4)
+VIF(glm_4)
+visreg::visreg(glm_4,"occupation_group",gg=TRUE,scale = "response")
+visreg::visreg(glm_4,"Social_group_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_4,"urban_poor_glm",gg=TRUE,scale = "response")
+visreg::visreg(glm_4,"couple_noroom_glm",gg=TRUE,scale = "response")
+
+anova(glm_4)
 ```
 
